@@ -7,14 +7,19 @@ import Loader from "react-loader-spinner";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import api from "./services/api";
 import LoadMore from "./components/Button/Button";
+import Modal from "./components/Modal/Modal";
 import "./App.css";
 export default class App extends Component {
+  static propTypes = {};
+
   state = {
     searchInfo: "",
+    showModal: false,
     data: [],
     error: null,
     status: "idle",
     page: 1,
+    currImg: {},
   };
 
   componentDidUpdate(prevProps, prevState) {
@@ -60,13 +65,19 @@ export default class App extends Component {
     }));
   };
 
+  toggleModal = (image) => {
+    this.setState(({ showModal }) => ({
+      showModal: !showModal,
+      currImg: image,
+    }));
+  };
+
   scrollToBottom = () => {
     scroll.scrollToBottom();
   };
 
   render() {
-    const { status, data } = this.state;
-
+    const { status, data, currImg } = this.state;
     return (
       <div className="App">
         <SearchBar onSubmit={this.handleSubmitForm} />
@@ -88,16 +99,22 @@ export default class App extends Component {
 
         {status === "resolved" && (
           <div>
-            <ImageGallery data={data} />
+            <ImageGallery data={data} onOpenModal={this.toggleModal} />
             {data.length > 0 && <LoadMore onLoadMore={this.onLoadMore} />}
+            <ToastContainer autoClose={2000} position="top-right" />
           </div>
         )}
 
         {status === "rejected" && (
           <div>
             <ImageGallery data={data} />
-            <ToastContainer autoClose={2000} position="top-right" />
           </div>
+        )}
+
+        {this.state.showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img src={currImg.largeImageURL} alt={currImg.tags} />
+          </Modal>
         )}
       </div>
     );
