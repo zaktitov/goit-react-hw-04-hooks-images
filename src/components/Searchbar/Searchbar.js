@@ -1,4 +1,4 @@
-import react, { Component } from "react";
+import React, { Component } from "react";
 import s from "./Searchbar.module.css";
 import { BiSearchAlt } from "react-icons/bi";
 import { IconContext } from "react-icons";
@@ -14,10 +14,12 @@ export default class SearchBar extends Component {
 
   handleSubmit = (e) => {
     e.preventDefault();
-    this.props.onSubmit(this.state.searchInfo);
+
     if (this.state.searchInfo.trim() === "") {
-      return toast.error("Enter some text");
+      return toast.error("Enter the text!");
     }
+    this.props.onSubmit(this.state.searchInfo);
+    console.log(this.state.searchInfo);
     this.setState({ searchInfo: "" });
   };
 
