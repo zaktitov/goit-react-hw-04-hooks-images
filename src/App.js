@@ -9,114 +9,115 @@ import api from "./services/api";
 import LoadMore from "./components/Button/Button";
 import Modal from "./components/Modal/Modal";
 import "./App.css";
-export default class App extends Component {
-  static propTypes = {};
+import { useState, useEffect } from "react";
 
-  state = {
-    searchInfo: "",
-    showModal: false,
-    data: [],
-    error: null,
-    status: "idle",
-    page: 1,
-    currImg: {},
-  };
+export default function App() {
+  const [searchInfo, setInfo] = useState("");
+  const [showModal, setModal] = useState(false);
+  const [data, setData] = useState([]);
+  const [status, setStatus] = useState("idle");
+  const [page, setPage] = useState(1);
+  const [currImg, setImage] = useState({});
 
-  componentDidUpdate(prevProps, prevState) {
-    const { page, searchInfo } = this.state;
+  // state = {
+  //   searchInfo: "",
+  //   showModal: false,
+  //   data: [],
+  //   error: null,
+  //   status: "idle",
+  //   page: 1,
+  //   currImg: {},
+  // };
 
-    if (prevState.searchInfo !== searchInfo) {
-      this.setState({ status: "pending", page: 1 });
+  useEffect(() => {
+    if (searchInfo) {
+      setStatus("pending");
+      setPage(1);
+      setData([]);
 
       api
         .fetchPhotos(searchInfo, page)
         .then((data) => data.hits)
-        .then((images) => {
-          // console.log(images);
-          this.setState({ data: images, status: "resolved" });
+        .then((data) => {
+          setData(data);
+          setStatus("resolved");
         })
-        .catch((error) => this.setState({ error, status: "rejected" }));
-    }
+        .catch(setStatus("rejected"));
 
-    if (prevState.page !== page) {
-      this.setState({ status: "pending" });
-
-      api
-        .fetchPhotos(searchInfo, page)
-        .then((data) => data.hits)
-        .then((images) =>
-          this.setState((prevState) => ({
-            data: [...prevState.data, ...images],
-            status: "resolved",
-          }))
-        )
-        .catch((error) => this.setState({ error, status: "rejected" }));
       scroll.scrollToBottom();
     }
-  }
+  }, [searchInfo]);
 
-  handleSubmitForm = (searchInfo) => {
-    this.setState({ searchInfo });
+  useEffect(() => {
+    if (searchInfo && page !== 1) {
+      setStatus("pending");
+
+      api
+        .fetchPhotos(searchInfo, page)
+        .then((data) => data.hits)
+        .then((data) => {
+          setData(data);
+          setStatus("resolved");
+        })
+        .catch(setStatus("rejected"));
+
+      scroll.scrollToBottom();
+    }
+  }, [page]);
+
+  const handleSubmitForm = (searchInfo) => {
+    setInfo(searchInfo);
   };
 
-  onLoadMore = () => {
+  const onLoadMore = () => {
     this.setState((prevState) => ({
       page: prevState.page + 1,
     }));
   };
 
-  toggleModal = (image) => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-      currImg: image,
-    }));
+  const toggleModal = (image) => {
+    setModal(!showModal);
+    setImage(image);
   };
 
-  scrollToBottom = () => {
-    scroll.scrollToBottom();
-  };
+  return (
+    <div className="App">
+      <SearchBar onSubmit={handleSubmitForm} />
 
-  render() {
-    const { status, data, currImg } = this.state;
-    return (
-      <div className="App">
-        <SearchBar onSubmit={this.handleSubmitForm} />
+      {status === "idle" && <div>Enter the text</div>}
 
-        {status === "idle" && <div>Enter the text</div>}
+      {status === "pending" && (
+        <div>
+          <Loader
+            type="Puff"
+            color="#01BFFF"
+            height={100}
+            width={100}
+            timeout={3000} //3 secs
+          />
+          {/* <ImageGallery data={data} /> */}
+        </div>
+      )}
 
-        {status === "pending" && (
-          <div>
-            <Loader
-              type="Puff"
-              color="#01BFFF"
-              height={100}
-              width={100}
-              timeout={3000} //3 secs
-            />
-            {/* <ImageGallery data={data} /> */}
-          </div>
-        )}
+      {status === "resolved" && (
+        <div>
+          <ImageGallery data={data} onOpenModal={toggleModal} />
+          {data.length > 0 && <LoadMore onLoadMore={onLoadMore} />}
+          <ToastContainer autoClose={2000} position="top-right" />
+        </div>
+      )}
 
-        {status === "resolved" && (
-          <div>
-            <ImageGallery data={data} onOpenModal={this.toggleModal} />
-            {data.length > 0 && <LoadMore onLoadMore={this.onLoadMore} />}
-            <ToastContainer autoClose={2000} position="top-right" />
-          </div>
-        )}
+      {status === "rejected" && (
+        <div>
+          <ImageGallery data={data} />
+        </div>
+      )}
 
-        {status === "rejected" && (
-          <div>
-            <ImageGallery data={data} />
-          </div>
-        )}
-
-        {this.state.showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img src={currImg.largeImageURL} alt={currImg.tags} />
-          </Modal>
-        )}
-      </div>
-    );
-  }
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          <img src={currImg.largeImageURL} alt={currImg.tags} />
+        </Modal>
+      )}
+    </div>
+  );
 }
