@@ -6,7 +6,7 @@ import { animateScroll as scroll } from "react-scroll";
 import Loader from "react-loader-spinner";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import api from "./services/api";
-import LoadMore from "./components/Button/Button";
+import Button from "./components/Button/Button";
 import Modal from "./components/Modal/Modal";
 import "./App.css";
 import { useState, useEffect } from "react";
@@ -39,7 +39,7 @@ export default function App() {
         .fetchPhotos(searchInfo, page)
         .then((data) => data.hits)
         .then((data) => {
-          setData(data);
+          setData((prevState) => [...prevState, ...data]);
           setStatus("resolved");
         })
         .catch(setStatus("rejected"));
@@ -56,7 +56,7 @@ export default function App() {
         .fetchPhotos(searchInfo, page)
         .then((data) => data.hits)
         .then((data) => {
-          setData(data);
+          setData((prevState) => [...prevState, ...data]);
           setStatus("resolved");
         })
         .catch(setStatus("rejected"));
@@ -67,12 +67,6 @@ export default function App() {
 
   const handleSubmitForm = (searchInfo) => {
     setInfo(searchInfo);
-  };
-
-  const onLoadMore = () => {
-    this.setState((prevState) => ({
-      page: prevState.page + 1,
-    }));
   };
 
   const toggleModal = (image) => {
@@ -88,21 +82,16 @@ export default function App() {
 
       {status === "pending" && (
         <div>
-          <Loader
-            type="Puff"
-            color="#01BFFF"
-            height={100}
-            width={100}
-            timeout={3000} //3 secs
-          />
-          {/* <ImageGallery data={data} /> */}
+          <Loader type="ThreeDots" color="#3f51b5" height={80} width={80} />
         </div>
       )}
 
       {status === "resolved" && (
         <div>
           <ImageGallery data={data} onOpenModal={toggleModal} />
-          {data.length > 0 && <LoadMore onLoadMore={onLoadMore} />}
+          {data.length !== 0 && (
+            <Button onLoadMore={() => setPage((prevState) => prevState + 1)} />
+          )}
           <ToastContainer autoClose={2000} position="top-right" />
         </div>
       )}
