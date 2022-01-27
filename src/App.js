@@ -78,7 +78,7 @@ export default function App() {
     <div className="App">
       <SearchBar onSubmit={handleSubmitForm} />
 
-      {status === "idle" && <div>Enter the text</div>}
+      {status === "idle" && <div>Enter the Text</div>}
 
       {status === "pending" && (
         <div>
